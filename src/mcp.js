@@ -25,7 +25,7 @@ export function handle(msg) {
   if (!msg || msg.jsonrpc !== "2.0" || typeof method !== "string") return err(-32600, "Invalid Request");
   if (id === undefined) return null; // notification, e.g. notifications/initialized
   switch (method) {
-    case "initialize": return ok({ protocolVersion: PROTOCOL, capabilities: { tools: {}, resources: {} }, serverInfo: { name: "agent-06-mcp-server", version: "1.0.0" } });
+    case "initialize": return ok({ protocolVersion: PROTOCOL, capabilities: { tools: {}, resources: {} }, serverInfo: { name: "agent-06-mcp-server", version: "1.1.0" } });
     case "ping": return ok({});
     case "tools/list": return ok({ tools: TOOLS.map(({ run, ...t }) => t) });
     case "tools/call": {

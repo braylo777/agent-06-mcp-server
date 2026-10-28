@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --import ./test/support/register.mjs --test test/*.test.js",
     "build": "node build.mjs",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"

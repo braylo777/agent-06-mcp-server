@@ -1,0 +1,28 @@
+{
+ "protocol": [
+  {"name":"initialize","req":{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"eval","version":"1"}}},"check":"result.protocolVersion=2025-06-18"},
+  {"name":"ping","req":{"jsonrpc":"2.0","id":"p-1","method":"ping"},"check":"result"},
+  {"name":"tools/list","req":{"jsonrpc":"2.0","id":2,"method":"tools/list"},"check":"tools4"},
+  {"name":"calculator","req":{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"calculator","arguments":{"expression":"(2+3)*4"}}},"check":"text=20"},
+  {"name":"word_stats","req":{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"word_stats","arguments":{"text":"Hi there. Bye!"}}},"check":"text={\"words\":3,\"chars\":14,\"sentences\":2}"},
+  {"name":"tool error is isError","req":{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"calculator","arguments":{"expression":"2+"}}},"check":"isError"},
+  {"name":"unknown tool -32602","req":{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"nope"}},"check":"error=-32602"},
+  {"name":"unknown method -32601","req":{"jsonrpc":"2.0","id":7,"method":"foo/bar"},"check":"error=-32601"},
+  {"name":"invalid request -32600","req":{"id":8,"method":"ping"},"check":"error=-32600"},
+  {"name":"notification -> 202","req":{"jsonrpc":"2.0","method":"notifications/initialized"},"check":"status=202"},
+  {"name":"batch","req":[{"jsonrpc":"2.0","id":9,"method":"ping"},{"jsonrpc":"2.0","id":10,"method":"tools/list"}],"check":"batch2"},
+  {"name":"resources/read","req":{"jsonrpc":"2.0","id":11,"method":"resources/read","params":{"uri":"notes://all"}},"check":"resource"}
+ ],
+ "agent": [
+  {"task":"What is (17*23)+4?","tool":"calculator","expect":"395"},
+  {"task":"Calculate 144 / 12 + 7.","tool":"calculator","expect":"19"},
+  {"task":"What's 15% of 80? Compute 80*15/100.","tool":"calculator","expect":"12"},
+  {"task":"How many words are in this sentence: 'agents call tools over MCP'?","tool":"word_stats","expect":"\"words\":5"},
+  {"task":"Count the sentences in: 'I came. I saw. I left!'","tool":"word_stats","expect":"\"sentences\":3"},
+  {"task":"Search the server's notes for anything about JSON-RPC.","tool":"search_notes","expect":"JSON-RPC"},
+  {"task":"Do the notes say anything about Cloudflare Workers?","tool":"search_notes","expect":"Cloudflare"},
+  {"task":"What time is it right now in UTC?","tool":"utc_time","expect":"2026-"},
+  {"task":"What is 2 to the power of 10, written as 2*2*2*2*2*2*2*2*2*2?","tool":"calculator","expect":"1024"},
+  {"task":"How many characters are in the text 'hello world'?","tool":"word_stats","expect":"\"chars\":11"}
+ ]
+}

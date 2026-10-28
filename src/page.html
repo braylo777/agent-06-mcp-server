@@ -1,15 +1,38 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>MCP Server</title>
-<style>body{font-family:system-ui;max-width:760px;margin:32px auto;padding:0 16px;background:#0b1730;color:#eef}a{color:#9cf}textarea,input,select,button{font-size:15px;padding:8px;border-radius:6px;border:1px solid #345;background:#13234a;color:#eef}textarea{width:100%;box-sizing:border-box}button{cursor:pointer;background:#2b5bd7}pre{background:#13234a;padding:12px;white-space:pre-wrap;border-radius:6px;max-height:480px;overflow:auto}.row{display:flex;gap:8px;margin:8px 0}</style></head>
-<body><h1>MCP Server</h1><p>A remote Model Context Protocol server on Cloudflare Workers. Endpoint: <code>/mcp</code> (Streamable HTTP). Use this page as an inspector, or connect any MCP client.</p>
-<div class=row><select id=ep><option value="0">POST /mcp — initialize</option><option value="1">POST /mcp — tools/list</option><option value="2">POST /mcp — call calculator</option><option value="3">POST /mcp — call word_stats</option><option value="4">POST /mcp — call search_notes</option><option value="5">POST /mcp — resources/read</option></select><button id=go>Send</button></div>
-<textarea id=bd rows=5></textarea><p style="opacity:.7;font-size:13px">Edit the JSON body and press Send. Rate limited to keep this demo on the free tier. Source on <a href="https://github.com/braylo777/agent-06-mcp-server">GitHub</a>.</p>
-<h3>Response</h3><pre id=out></pre>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MCP Server · Braylo</title><style>:root{--navy:#0d1520;--cream:#efe9dc;--brass:#b39b70;--ink:#16202e;--line:#253246}
+*{box-sizing:border-box}body{margin:0;background:var(--navy);color:var(--cream);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:40px 20px 56px}
+header .tag{color:var(--brass);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:600}
+h1{font-family:Georgia,serif;font-weight:500;font-size:34px;margin:6px 0 8px}
+.lead{opacity:.82;max-width:640px;margin:0 0 24px}
+.card{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}
+.card h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin:0 0 10px;font-weight:600}
+textarea,input,select{width:100%;font:inherit;color:var(--cream);background:var(--navy);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--brass)}
+button{font:inherit;font-weight:600;background:var(--brass);color:var(--navy);border:0;border-radius:8px;padding:10px 18px;cursor:pointer}
+button.ghost{background:transparent;color:var(--cream);border:1px solid var(--line)}button:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}.row>input,.row>select{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--cream);font-weight:400}
+.chip:hover{border-color:var(--brass)}
+.out{white-space:pre-wrap;min-height:48px}.meta{font-size:12px;opacity:.6;margin-top:8px}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(179,155,112,.15);color:var(--brass);margin:2px 4px 2px 0}
+pre{background:var(--navy);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px;max-height:360px;margin:0}
+footer{margin-top:28px;font-size:13px;opacity:.65}a{color:var(--brass)}
+</style></head>
+<body><div class="wrap"><header><div class="tag">Project 06 · Agentic AI portfolio</div><h1>MCP Server</h1>
+<p class="lead">A remote Model Context Protocol server (JSON-RPC 2.0 over Streamable HTTP) on Cloudflare Workers, with 4 tools and a resource. Connect any MCP client to <code>/mcp</code>, or try it here. The agent box lets Llama 3.3 pick and call the tools.</p></header>
+<div class="card"><h2>Ask the agent (LLM → MCP tools)</h2><div class="chips" id="ex"></div>
+<div class="row"><input id="q" maxlength="500" placeholder="e.g. What is (17*23)+4?"><button id="ask">Run</button></div><div id="aout" class="out meta"></div></div>
+<div class="card"><h2>Raw JSON-RPC</h2><div class="row"><select id="m"></select><button id="send">Send</button></div>
+<div class="row"><textarea id="bd" rows="5"></textarea></div><div class="row" style="display:block"><pre id="out">Response appears here.</pre></div></div>
+<footer>MCP endpoint: <code id="ep"></code> · rate limited to stay on the free tier · <a href="https://github.com/braylo777/agent-06-mcp-server">Source on GitHub</a></footer></div>
 <script>
-const S=localStorage.sid||(localStorage.sid=Math.random().toString(36).slice(2,10));
-const E=[{"label": "initialize", "method": "POST", "path": "/mcp", "body": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "inspector", "version": "1"}}}}, {"label": "tools/list", "method": "POST", "path": "/mcp", "body": {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}}, {"label": "call calculator", "method": "POST", "path": "/mcp", "body": {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "calculator", "arguments": {"expression": "(17*23)+4"}}}}, {"label": "call word_stats", "method": "POST", "path": "/mcp", "body": {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "word_stats", "arguments": {"text": "MCP is great. Agents love tools!"}}}}, {"label": "call search_notes", "method": "POST", "path": "/mcp", "body": {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "search_notes", "arguments": {"query": "workers"}}}}, {"label": "resources/read", "method": "POST", "path": "/mcp", "body": {"jsonrpc": "2.0", "id": 6, "method": "resources/read", "params": {"uri": "notes://all"}}}];
-const fill=()=>{const x=E[ep.value];bd.value=x.body?JSON.stringify(x.body,null,2).replaceAll("{{session}}",S):"";bd.disabled=x.method==="GET"};
-ep.onchange=fill;fill();
-go.onclick=async()=>{const x=E[ep.value];out.textContent="working…";const t0=Date.now();
-try{const r=await fetch(x.path.replaceAll("{{session}}",S),x.method==="GET"?{}:{method:"POST",headers:{"content-type":"application/json"},body:bd.value});
-out.textContent=`HTTP ${r.status} · ${Date.now()-t0} ms\n\n`+JSON.stringify(await r.json(),null,2)}catch(e){out.textContent=String(e)}};
+const $=id=>document.getElementById(id);$("ep").textContent=location.origin+"/mcp";
+const M={"initialize":{protocolVersion:"2025-06-18",capabilities:{},clientInfo:{name:"demo",version:"1"}},"tools/list":{},"tools/call calculator":{name:"calculator",arguments:{expression:"(2+3)*4"}},"tools/call word_stats":{name:"word_stats",arguments:{text:"MCP is open. It is simple!"}},"tools/call search_notes":{name:"search_notes",arguments:{query:"json-rpc"}},"resources/read":{uri:"notes://all"}};
+Object.keys(M).forEach(k=>$("m").add(new Option(k,k)));const fill=()=>{const k=$("m").value;$("bd").value=JSON.stringify({jsonrpc:"2.0",id:1,method:k.split(" ")[0],params:M[k]},null,2)};$("m").onchange=fill;fill();
+$("send").onclick=async()=>{const t=Date.now();try{const r=await fetch("/mcp",{method:"POST",headers:{"content-type":"application/json"},body:$("bd").value});$("out").textContent=`HTTP ${r.status} · ${Date.now()-t} ms\n\n`+JSON.stringify(await r.json(),null,2)}catch(e){$("out").textContent=String(e)}};
+["What is (17*23)+4?","How many words are in 'agents call tools over MCP'?","Search the notes for JSON-RPC"].forEach(t=>{const b=document.createElement("button");b.className="chip";b.textContent=t;b.onclick=()=>{$("q").value=t;ask()};$("ex").append(b)});
+async function ask(){const q=$("q").value.trim();if(!q)return;$("ask").disabled=true;$("aout").textContent="Thinking…";const t=Date.now();
+try{const r=await fetch("/api/agent",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({task:q})});const j=await r.json();
+$("aout").textContent=j.error?"Error: "+j.error:`Tool: ${j.tool||"(none)"} ${JSON.stringify(j.arguments||{})}\nResult: ${j.result??"-"}\n\n${j.answer||""}\n\nHTTP ${r.status} · ${Date.now()-t} ms`}catch(e){$("aout").textContent=String(e)}$("ask").disabled=false}
+$("ask").onclick=ask;$("q").onkeydown=e=>{if(e.key==="Enter")ask()};
 </script></body></html>

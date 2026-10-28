@@ -1,0 +1,489 @@
+{
+  "project": "agent-06-mcp-server",
+  "base": "https://agent-06-mcp-server.braylo777.workers.dev",
+  "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  "protocol": "MCP 2025-06-18, JSON-RPC 2.0 over Streamable HTTP (stateless)",
+  "run_at": "2026-10-28T00:43:06.609Z",
+  "n_cases": 22,
+  "metrics": {
+    "protocol_compliance": {
+      "correct": 12,
+      "n": 12,
+      "rate": 1
+    },
+    "tool_call_success": {
+      "correct": 8,
+      "n": 8,
+      "rate": 1.0,
+      "not_run": 2
+    },
+    "tool_selection_accuracy": {
+      "correct": 8,
+      "n": 8,
+      "rate": 1.0,
+      "not_run": 2
+    },
+    "latency_ms": {
+      "mcp": {
+        "n": 12,
+        "p50": 94,
+        "p95": 209
+      },
+      "agent": {
+        "n": 8,
+        "p50": 1978,
+        "p95": 4987
+      },
+      "note": "end-to-end from the eval client"
+    }
+  },
+  "cases": {
+    "protocol": [
+      {
+        "name": "initialize",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "result": {
+            "protocolVersion": "2025-06-18",
+            "capabilities": {
+              "tools": {},
+              "resources": {}
+            },
+            "serverInfo": {
+              "name": "agent-06-mcp-server",
+              "version": "1.1.0"
+            }
+          }
+        }
+      },
+      {
+        "name": "ping",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": "p-1",
+          "result": {}
+        }
+      },
+      {
+        "name": "tools/list",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 2,
+          "result": {
+            "tools": [
+              {
+                "name": "calculator",
+                "description": "Evaluate arithmetic like (2+3)*4",
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {
+                    "expression": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "expression"
+                  ]
+                }
+              },
+              {
+                "name": "word_stats",
+                "description": "Count words, characters and sentences in text",
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "text"
+                  ]
+                }
+              },
+              {
+                "name": "search_notes",
+                "description": "Keyword search over the server's notes",
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ]
+                }
+              },
+              {
+                "name": "utc_time",
+                "description": "Current UTC time",
+                "inputSchema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "calculator",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 3,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "20"
+              }
+            ],
+            "isError": false
+          }
+        }
+      },
+      {
+        "name": "word_stats",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 4,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\"words\":3,\"chars\":14,\"sentences\":2}"
+              }
+            ],
+            "isError": false
+          }
+        }
+      },
+      {
+        "name": "tool error is isError",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 5,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "Error: invalid expression"
+              }
+            ],
+            "isError": true
+          }
+        }
+      },
+      {
+        "name": "unknown tool -32602",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 6,
+          "error": {
+            "code": -32602,
+            "message": "Unknown tool: nope"
+          }
+        }
+      },
+      {
+        "name": "unknown method -32601",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 7,
+          "error": {
+            "code": -32601,
+            "message": "Method not found: foo/bar"
+          }
+        }
+      },
+      {
+        "name": "invalid request -32600",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 8,
+          "error": {
+            "code": -32600,
+            "message": "Invalid Request"
+          }
+        }
+      },
+      {
+        "name": "notification -> 202",
+        "status": 202,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": null
+      },
+      {
+        "name": "batch",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": [
+          {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "result": {}
+          },
+          {
+            "jsonrpc": "2.0",
+            "id": 10,
+            "result": {
+              "tools": [
+                {
+                  "name": "calculator",
+                  "description": "Evaluate arithmetic like (2+3)*4",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "expression": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "expression"
+                    ]
+                  }
+                },
+                {
+                  "name": "word_stats",
+                  "description": "Count words, characters and sentences in text",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ]
+                  }
+                },
+                {
+                  "name": "search_notes",
+                  "description": "Keyword search over the server's notes",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ]
+                  }
+                },
+                {
+                  "name": "utc_time",
+                  "description": "Current UTC time",
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "resources/read",
+        "status": 200,
+        "specific": true,
+        "envelope": true,
+        "idOk": true,
+        "pass": true,
+        "response": {
+          "jsonrpc": "2.0",
+          "id": 11,
+          "result": {
+            "contents": [
+              {
+                "uri": "notes://all",
+                "mimeType": "text/plain",
+                "text": "MCP servers expose tools, resources and prompts to any MCP client.\nCloudflare Workers can host remote MCP servers on the free tier.\nJSON-RPC 2.0 messages carry a method, params and an id."
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "agent": [
+      {
+        "task": "What is (17*23)+4?",
+        "tool": "calculator",
+        "expect": "395",
+        "chosen": "calculator",
+        "arguments": {
+          "expression": "(17*23)+4"
+        },
+        "result": "395",
+        "answer": "The result of (17*23)+4 is 395.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "Calculate 144 / 12 + 7.",
+        "tool": "calculator",
+        "expect": "19",
+        "chosen": "calculator",
+        "arguments": {
+          "expression": "144 / 12 + 7"
+        },
+        "result": "19",
+        "answer": "The result of the calculation 144 / 12 + 7 is 19.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "What's 15% of 80? Compute 80*15/100.",
+        "tool": "calculator",
+        "expect": "12",
+        "chosen": "calculator",
+        "arguments": {
+          "expression": "80*15/100"
+        },
+        "result": "12",
+        "answer": "15% of 80 is 12.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "How many words are in this sentence: 'agents call tools over MCP'?",
+        "tool": "word_stats",
+        "expect": "\"words\":5",
+        "chosen": "word_stats",
+        "arguments": {
+          "text": "agents call tools over MCP"
+        },
+        "result": "{\"words\":5,\"chars\":26,\"sentences\":0}",
+        "answer": "There are 5 words in the sentence 'agents call tools over MCP'.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "Count the sentences in: 'I came. I saw. I left!'",
+        "tool": "word_stats",
+        "expect": "\"sentences\":3",
+        "chosen": "word_stats",
+        "arguments": {
+          "text": "I came. I saw. I left!"
+        },
+        "result": "{\"words\":6,\"chars\":22,\"sentences\":3}",
+        "answer": "The text contains 3 sentences.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "Search the server's notes for anything about JSON-RPC.",
+        "tool": "search_notes",
+        "expect": "JSON-RPC",
+        "chosen": "search_notes",
+        "arguments": {
+          "query": "JSON-RPC"
+        },
+        "result": "JSON-RPC 2.0 messages carry a method, params and an id.",
+        "answer": "The server's notes indicate that JSON-RPC 2.0 messages consist of a method, parameters, and an identifier.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "Do the notes say anything about Cloudflare Workers?",
+        "tool": "search_notes",
+        "expect": "Cloudflare",
+        "chosen": "search_notes",
+        "arguments": {
+          "query": "Cloudflare Workers"
+        },
+        "result": "Cloudflare Workers can host remote MCP servers on the free tier.",
+        "answer": "Yes, the notes mention that Cloudflare Workers can host remote MCP servers on the free tier.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "What time is it right now in UTC?",
+        "tool": "utc_time",
+        "expect": "2026-",
+        "chosen": "utc_time",
+        "arguments": {},
+        "result": "2026-10-28T00:42:37.629Z",
+        "answer": "The current time in UTC is 2026-10-28T00:42:37.629Z.",
+        "tool_selected": true,
+        "pass": true
+      },
+      {
+        "task": "What is 2 to the power of 10, written as 2*2*2*2*2*2*2*2*2*2?",
+        "tool": "calculator",
+        "expect": "1024",
+        "error": "Agent error: 4006: you have used up your daily free allocation of 10,000 neurons, please upgrade to Cloudflare's Workers Paid plan if you would like to continue usage.",
+        "tool_selected": false,
+        "pass": false,
+        "not_run": "Workers AI daily free allocation exhausted (shared account); excluded from rates"
+      },
+      {
+        "task": "How many characters are in the text 'hello world'?",
+        "tool": "word_stats",
+        "expect": "\"chars\":11",
+        "error": "Agent error: 4006: you have used up your daily free allocation of 10,000 neurons, please upgrade to Cloudflare's Workers Paid plan if you would like to continue usage.",
+        "tool_selected": false,
+        "pass": false,
+        "not_run": "Workers AI daily free allocation exhausted (shared account); excluded from rates"
+      }
+    ]
+  },
+  "n_cases_run": 20
+}
