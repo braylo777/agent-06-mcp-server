@@ -26,13 +26,13 @@ flowchart LR
 ```
 
 ## How it works
-- `src/mcp.js`: the MCP server. It validates the JSON-RPC envelope, echoes request ids, answers notifications with 202 and no body, supports batches, and uses the spec's error codes (`-32600`, `-32601`, `-32602`). A tool failure returns `isError: true` instead of crashing.
-- `src/calc.js`: a safe arithmetic parser (no `eval`, which Workers forbid).
-- `src/agent.js`: LLM-as-MCP-client. It turns `tools/list` into function-calling schemas and reads the model's tool call, either native `tool_calls` or a JSON-text fallback.
+- `src/agent06/mcp.py` and `worker/src/mcp.rs`: the MCP server. It validates the JSON-RPC envelope, echoes request ids, answers notifications with 202 and no body, supports batches, and uses the spec's error codes (`-32600`, `-32601`, `-32602`). A tool failure returns `isError: true` instead of crashing.
+- `src/agent06/core.py` and `worker/src/core.rs`: a safe arithmetic parser (no `eval`, which Workers forbid).
+- `src/agent06/agent.py` and `worker/src/agent.rs`: LLM-as-MCP-client. It turns `tools/list` into function-calling schemas and reads the model's tool call, either native `tool_calls` or a JSON-text fallback.
 - Guardrails: 5 requests/min per IP, 500-character cap on agent tasks.
 
 ## Eval results
-Run live against the deployed server (`node evals/run.mjs`). Raw per-case output is in [`evals/results.json`](evals/results.json). Run on Oct 27, 2026.
+Run live against the deployed server (`python3 evals/run.py`). Raw per-case output is in [`evals/results.json`](evals/results.json). Run on Oct 27, 2026.
 
 | Metric | Result | Definition |
 |---|---|---|
@@ -45,24 +45,23 @@ Run live against the deployed server (`node evals/run.mjs`). Raw per-case output
 2 of the 10 agent cases did not run: the account's shared Workers AI daily free allocation ran out mid-eval. They are excluded from the rates, not counted as passes. Sample sizes are small (12 protocol cases, 8 agent cases), so treat these as smoke-level numbers.
 
 ## Tests
-17 offline unit tests (`node:test`, model mocked): every JSON-RPC method, error codes, id echo, notifications, batches over HTTP, 405 on GET, calculator precedence and bad input, `word_stats`, `search_notes` hit and miss, resources, tool-schema mapping, parsing native and JSON-text tool calls, and the agent routing a model's call through MCP.
-
-```bash
-npm test
-```
+Python: 10 tests; Rust: 7 test functions (model mocked): every JSON-RPC method, error codes, id echo, notifications, batches, calculator precedence and bad input, `word_stats`, `search_notes`, resources, and the model-as-client flow. A corpus of 56 JSON-RPC messages (valid, malformed, notifications, odd ids and params) plus 4 batches gives identical responses for the old JavaScript, the Python and the Rust code. The protocol cases in `evals/cases.json` pass offline against the Python handler (12/12).
 
 ## Run it
 ```bash
-npm install
-npm test             # offline unit tests (Node 20+)
-npx wrangler dev     # local
-npx wrangler deploy  # free tier, no paid API keys
-node evals/run.mjs   # live eval, throttled to the rate limit; writes evals/results.json
+python3 -m pytest                      # Python tests
+cd worker && cargo test                # Rust tests
+cd worker && worker-build --release    # build the Worker (wasm)
+wrangler dev                           # local
+wrangler deploy                        # free tier, no paid API keys
+BASE=https://... python3 evals/run.py  # live eval, throttled; writes evals/results.json
 ```
-Connect a client: `npx @modelcontextprotocol/inspector`, then choose transport "Streamable HTTP" and URL `<your-worker>/mcp`.
+Connect a client: use any MCP client or inspector, choose transport "Streamable HTTP" and URL `<your-worker>/mcp`.
+
+The previous JavaScript version is on the `legacy-js` branch and the `pre-pycrust` tag.
 
 ## Stack
-Cloudflare Workers · Workers AI (Llama 3.3 70B, function calling) · MCP 2025-06-18 · vanilla JS · node:test
+Cloudflare Workers · Workers AI (Llama 3.3 70B, function calling) · MCP 2025-06-18 · Rust (workers-rs) · Python (pytest)
 
 ## License
 MIT

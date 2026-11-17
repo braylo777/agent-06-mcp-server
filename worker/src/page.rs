@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MCP Server · Braylo</title><style>:root{--navy:#0d1520;--cream:#efe9dc;--brass:#b39b70;--ink:#16202e;--line:#253246}
+//! Demo page (generated from the old src/page.html; kept as a Rust string).
+pub const PAGE: &str = r####"<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MCP Server · Braylo</title><style>:root{--navy:#0d1520;--cream:#efe9dc;--brass:#b39b70;--ink:#16202e;--line:#253246}
 *{box-sizing:border-box}body{margin:0;background:var(--navy);color:var(--cream);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
 .wrap{max-width:860px;margin:0 auto;padding:40px 20px 56px}
 header .tag{color:var(--brass);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:600}
@@ -36,3 +37,4 @@ try{const r=await fetch("/api/agent",{method:"POST",headers:{"content-type":"app
 $("aout").textContent=j.error?"Error: "+j.error:`Tool: ${j.tool||"(none)"} ${JSON.stringify(j.arguments||{})}\nResult: ${j.result??"-"}\n\n${j.answer||""}\n\nHTTP ${r.status} · ${Date.now()-t} ms`}catch(e){$("aout").textContent=String(e)}$("ask").disabled=false}
 $("ask").onclick=ask;$("q").onkeydown=e=>{if(e.key==="Enter")ask()};
 </script></body></html>
+"####;
